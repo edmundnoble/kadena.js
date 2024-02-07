@@ -19,7 +19,7 @@ import { getWalletKey, toHexStr } from '../../keys/utils/keysHelpers.js';
 import type { EncryptedString } from '@kadena/hd-wallet';
 import { kadenaDecrypt } from '@kadena/hd-wallet';
 import type { ICommand } from '@kadena/types';
-import { join } from 'node:path';
+import path from 'node:path';
 import type { IKeyPair } from '../../keys/utils/storage.js';
 import { txOptions } from '../txOptions.js';
 
@@ -120,13 +120,15 @@ export const createSignTransactionWithAliasFileCommand = createCommandFlexible(
       ...mode,
     });
 
+    const absolutePaths = files.txUnsignedTransactionFiles.map((file) =>
+      path.resolve(path.join(dir.txTransactionDir, file)),
+    );
+
     const result = await signTransactionWithAliasFile(
       wallet.keyWalletConfig,
       key.keyAliasSelect,
       password.securityPassword,
-      files.txUnsignedTransactionFiles.map((file) =>
-        join(dir.txTransactionDir, file),
-      ),
+      absolutePaths,
       false,
       mode.legacy,
     );

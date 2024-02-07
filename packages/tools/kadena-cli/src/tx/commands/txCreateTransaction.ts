@@ -56,6 +56,19 @@ export const createTransaction = async (
       filePath = outFilePath;
     }
 
+    // template dir
+    // ./.kadena/transaction-templates
+
+    // kadena tx create-transaction ./kadena/transaction-templates/transfer.yaml
+
+    // --to-file
+
+    // sign:
+    // do not prompt but allow --directory (otherwise working directory)
+
+    // output suggestion
+    // ./{templateName}-{timestamp}-{hash}.json
+
     await services.filesystem.writeFile(
       filePath,
       JSON.stringify(transaction, null, 2),
@@ -80,6 +93,7 @@ export const createTransactionCommandNew = createCommandFlexible(
     globalOptions.outFileJson(),
   ],
   async (option, values) => {
+    console.error('values', values);
     const template = await option.template();
     const templateData = await option.templateData();
     const templateVariables = await option.templateVariables({

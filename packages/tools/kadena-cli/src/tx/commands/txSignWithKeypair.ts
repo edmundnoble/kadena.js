@@ -14,7 +14,7 @@ import {
 } from '../utils/txHelpers.js';
 
 import type { ICommand } from '@kadena/types';
-import { join } from 'node:path';
+import path from 'node:path';
 import type { IKeyPair } from '../../keys/utils/storage.js';
 import { createCommandFlexible } from '../../utils/createCommandFlexible.js';
 import { txOptions } from '../txOptions.js';
@@ -95,11 +95,13 @@ export const createSignTransactionWithKeyPairCommand: (
       ...mode,
     });
 
+    const absolutePaths = files.txUnsignedTransactionFiles.map((file) =>
+      path.resolve(path.join(dir.txTransactionDir, file)),
+    );
+
     const result = await signTransactionWithKeyPairAction(
       key.keyPairs,
-      files.txUnsignedTransactionFiles.map((file) =>
-        join(dir.txTransactionDir, file),
-      ),
+      absolutePaths,
       mode.legacy,
     );
 

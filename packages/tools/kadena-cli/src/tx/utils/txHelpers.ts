@@ -250,7 +250,7 @@ export async function getTransactionFromFile(
     const transactionFilePath = transactionFile.startsWith('.')
       ? join(process.cwd(), transactionFile)
       : transactionFile;
-    // const transactionFilePath = join(TRANSACTION_PATH, transactionFile);
+
     const fileContent = await services.filesystem.readFile(transactionFilePath);
 
     if (fileContent === null) {
@@ -258,11 +258,10 @@ export async function getTransactionFromFile(
     }
     const transaction = JSON.parse(fileContent);
     if (signed) {
-      const result = tx.ICommandSchema.parse(transaction);
-      return result as ICommand;
+      return tx.ICommandSchema.parse(transaction);
     }
     const result = tx.IUnsignedCommandSchema.parse(transaction);
-    return result as IUnsignedCommand;
+    return result as IUnsignedCommand; // typecast because `IUnsignedCommand` uses undefined instead of null
   } catch (error) {
     console.error(
       `Error processing ${

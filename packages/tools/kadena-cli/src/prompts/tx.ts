@@ -2,16 +2,18 @@ import { checkbox, input, select } from '@inquirer/prompts';
 import type { IUnsignedCommand } from '@kadena/types';
 import chalk from 'chalk';
 import { z } from 'zod';
-import { getTransactions } from '../tx/utils/txHelpers.js';
 
 import { TRANSACTION_FOLDER_NAME } from '../constants/config.js';
+import { getTransactions } from '../tx/utils/txHelpers.js';
 
 import {
   getAllPlainKeys,
   getAllWalletKeys,
 } from '../keys/utils/keysHelpers.js';
+import { services } from '../services/index.js';
 import { defaultTemplates } from '../tx/commands/templates/templates.js';
 import type { IPrompt } from '../utils/createOption.js';
+import { INQUIRER_OPTIONS } from '../utils/prompts.js';
 
 const CommandPayloadStringifiedJSONSchema = z.string();
 const PactTransactionHashSchema = z.string();
@@ -46,30 +48,32 @@ export const IUnsignedCommandSchema = z.object({
 // ]);
 
 export async function txUnsignedCommandPrompt(): Promise<IUnsignedCommand> {
-  const result = await input({
-    message: `Enter your transaction to sign:`,
-    validate: (inputString) => {
-      try {
-        const parsedInput = JSON.parse(inputString);
-        IUnsignedCommandSchema.parse(parsedInput);
-        return true;
-      } catch (error) {
-        console.log('error', error);
-        return 'Incorrect Format. Please enter a valid Unsigned Command.';
-      }
+  const result = await input(
+    {
+      message: `Enter your transaction to sign:`,
+      validate: (inputString) => {
+        try {
+          const parsedInput = JSON.parse(inputString);
+          IUnsignedCommandSchema.parse(parsedInput);
+          return true;
+        } catch (error) {
+          console.log('error', error);
+          return 'Incorrect Format. Please enter a valid Unsigned Command.';
+        }
+      },
     },
-  });
+    INQUIRER_OPTIONS,
+  );
   return JSON.parse(result) as IUnsignedCommand;
 }
 
 export const transactionSelectPrompt: IPrompt<string> = async (args) => {
-  const existingTransactions: string[] = await getTransactions(
-    args.signed as boolean,
-    args.path as string,
-  );
+  const signed = (args.signed as boolean) ?? false;
+  const path = (args.path as string) ?? (args.txTransactionDir as string);
+  const existingTransactions: string[] = await getTransactions(signed, path);
 
   if (existingTransactions.length === 0) {
-    throw new Error('No transactions found. Exiting.');
+    throw new Error('No transactions found.');
   }
 
   const choices = existingTransactions.map((transaction) => ({
@@ -77,22 +81,28 @@ export const transactionSelectPrompt: IPrompt<string> = async (args) => {
     name: `Transaction: ${transaction}`,
   }));
 
-  const selectedTransaction = await select({
-    message: 'Select a transaction file',
-    choices: choices,
-  });
+  const selectedTransaction = await select(
+    {
+      message: 'Select a transaction file',
+      choices: choices,
+    },
+    INQUIRER_OPTIONS,
+  );
 
   return selectedTransaction;
 };
 
 export const transactionsSelectPrompt: IPrompt<string[]> = async (args) => {
-  const existingTransactions: string[] = await getTransactions(
-    args.signed as boolean,
-    args.path as string,
-  );
+  const signed = (args.signed as boolean) ?? true;
+  const path = (args.path as string) ?? (args.txTransactionDir as string);
+
+  const fileExists = await services.filesystem.fileExists(path);
+  if (fileExists) return [path];
+
+  const existingTransactions: string[] = await getTransactions(signed, path);
 
   if (existingTransactions.length === 0) {
-    throw new Error('No transactions found. Exiting.');
+    throw new Error('No transactions found.');
   }
 
   const choices = existingTransactions.map((transaction) => ({
@@ -100,28 +110,30 @@ export const transactionsSelectPrompt: IPrompt<string[]> = async (args) => {
     name: `Transaction: ${transaction}`,
   }));
 
-  const selectedTransaction = await checkbox({
-    message: 'Select a transaction file',
-    choices: choices,
-    pageSize: 10,
-    required: true,
-  });
+  const selectedTransaction = await checkbox(
+    {
+      message: 'Select a transaction file',
+      choices: choices,
+      pageSize: 10,
+      required: true,
+    },
+    INQUIRER_OPTIONS,
+  );
 
   return selectedTransaction;
 };
 
 export async function txTransactionDirPrompt(): Promise<string> {
   return await input({
-    message: `Enter your transaction directory (default: '${TRANSACTION_FOLDER_NAME}'):`,
-    validate: function (input) {
-      const validPathRegex = /^$|^\/[A-Za-z0-9._-]+$/;
-
-      if (!validPathRegex.test(input)) {
-        return 'Invalid directory format! Please enter a valid directory path starting with "/"';
+    message: `Enter your transaction directory (default: './${TRANSACTION_FOLDER_NAME}'):`,
+    validate: async (input) => {
+      const dirExists = await services.filesystem.directoryExists(input);
+      if (!dirExists) {
+        return 'Directory or file not found. Please enter a valid directory or file path.';
       }
       return true;
     },
-    default: `/${TRANSACTION_FOLDER_NAME}`,
+    default: `./${TRANSACTION_FOLDER_NAME}`,
   });
 }
 
@@ -136,15 +148,21 @@ export const selectTemplate: IPrompt<string> = async () => {
     ...defaultTemplateKeys.map((x) => ({ value: x, name: x })),
   ];
 
-  const result = await select({
-    message: 'Which template do you want to use:',
-    choices,
-  });
+  const result = await select(
+    {
+      message: 'Which template do you want to use:',
+      choices,
+    },
+    INQUIRER_OPTIONS,
+  );
 
   if (result === 'filepath') {
-    const result = await input({
-      message: 'File path:',
-    });
+    const result = await input(
+      {
+        message: 'File path:',
+      },
+      INQUIRER_OPTIONS,
+    );
     return result;
   }
 
@@ -176,20 +194,26 @@ const promptVariableValue = async (key: string): Promise<string> => {
       ...accounts.map((x) => ({ value: x, name: x })),
     ];
     if (hasAccount) {
-      value = await select({
-        message: `Select account alias for template value ${key}:`,
-        choices,
-      });
+      value = await select(
+        {
+          message: `Select account alias for template value ${key}:`,
+          choices,
+        },
+        INQUIRER_OPTIONS,
+      );
     }
 
     if (value === '_manual_' || !hasAccount) {
-      const inputValue = await input({
-        message: `Manual entry for account for template value ${key}:`,
-        validate: (value) => {
-          if (value === '') return `${key} cannot be empty`;
-          return true;
+      const inputValue = await input(
+        {
+          message: `Manual entry for account for template value ${key}:`,
+          validate: (value) => {
+            if (value === '') return `${key} cannot be empty`;
+            return true;
+          },
         },
-      });
+        INQUIRER_OPTIONS,
+      );
 
       return inputValue;
     }
@@ -220,20 +244,26 @@ const promptVariableValue = async (key: string): Promise<string> => {
     ];
 
     if (hasKeys) {
-      value = await select({
-        message: `Select public key alias for template value ${key}:`,
-        choices,
-      });
+      value = await select(
+        {
+          message: `Select public key alias for template value ${key}:`,
+          choices,
+        },
+        INQUIRER_OPTIONS,
+      );
     }
 
     if (value === '_manual_' || !hasKeys) {
-      return await input({
-        message: `Manual entry for public key for template value ${key}:`,
-        validate: (value) => {
-          if (value === '') return `${key} cannot be empty`;
-          return true;
+      return await input(
+        {
+          message: `Manual entry for public key for template value ${key}:`,
+          validate: (value) => {
+            if (value === '') return `${key} cannot be empty`;
+            return true;
+          },
         },
-      });
+        INQUIRER_OPTIONS,
+      );
     }
 
     const selectedKey =
@@ -250,24 +280,30 @@ const promptVariableValue = async (key: string): Promise<string> => {
   }
   if (key.startsWith('keyset-')) {
     // search for key alias - needs account implementation
-    const alias = await input({
-      message: `Template value for keyset ${key}:`,
-      validate: (value) => {
-        if (value === '') return `${key} cannot be empty`;
-        return true;
+    const alias = await input(
+      {
+        message: `Template value for keyset ${key}:`,
+        validate: (value) => {
+          if (value === '') return `${key} cannot be empty`;
+          return true;
+        },
       },
-    });
+      INQUIRER_OPTIONS,
+    );
     console.log('keyset alias', alias);
     return alias;
   }
 
-  return await input({
-    message: `Template value ${key}:`,
-    validate: (value) => {
-      if (value === '') return `${key} cannot be empty`;
-      return true;
+  return await input(
+    {
+      message: `Template value ${key}:`,
+      validate: (value) => {
+        if (value === '') return `${key} cannot be empty`;
+        return true;
+      },
     },
-  });
+    INQUIRER_OPTIONS,
+  );
 };
 
 export const templateVariables: IPrompt<Record<string, string>> = async (
@@ -300,15 +336,21 @@ export const templateVariables: IPrompt<Record<string, string>> = async (
 };
 
 export const outFilePrompt: IPrompt<string | null> = async (args) => {
-  const result = await input({
-    message: 'Where do you want to save the output:',
-  });
+  const result = await input(
+    {
+      message: 'Where do you want to save the output:',
+    },
+    INQUIRER_OPTIONS,
+  );
   return result ?? null;
 };
 
 export const templateDataPrompt: IPrompt<string | null> = async (args) => {
-  const result = await input({
-    message: 'File path of data to use for template (json or yaml):',
-  });
+  const result = await input(
+    {
+      message: 'File path of data to use for template (json or yaml):',
+    },
+    INQUIRER_OPTIONS,
+  );
   return result ?? null;
 };

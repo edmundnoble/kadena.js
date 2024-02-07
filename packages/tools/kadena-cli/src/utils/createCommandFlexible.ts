@@ -96,6 +96,7 @@ export const createCommandFlexible =
           customArgs?: Record<string, unknown>,
         ) => Promise<Prettify<OptionConfig<Extract<T[number], { key: K }>>>>;
       },
+      /** command arguments */
       values: string[],
     ) => Promise<Record<string, unknown> | void>,
   >(

@@ -12,7 +12,7 @@ import type { IWallet } from '../../keys/utils/keysHelpers.js';
 import { getWalletContent } from '../../keys/utils/keysHelpers.js';
 import { createCommandFlexible } from '../../utils/createCommandFlexible.js';
 
-import { join } from 'node:path';
+import path from 'node:path';
 import { txOptions } from '../txOptions.js';
 import { saveSignedTransactions } from '../utils/storage.js';
 import {
@@ -107,13 +107,15 @@ export const createSignTransactionWithLocalWalletCommand: (
       throw new Error(`Wallet: ${wallet.keyWallet} does not exist.`);
     }
 
+    const absolutePaths = files.txUnsignedTransactionFiles.map((file) =>
+      path.resolve(path.join(dir.txTransactionDir, file)),
+    );
+
     const result = await signTransactionWithLocalWallet(
       wallet.keyWallet,
       wallet.keyWalletConfig,
       password.securityPassword,
-      files.txUnsignedTransactionFiles.map((file) =>
-        join(dir.txTransactionDir, file),
-      ),
+      absolutePaths,
       false,
     );
 

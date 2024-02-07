@@ -48,3 +48,35 @@ export const networkChoices: { value: string; name: string }[] = [
   { value: 'testnet', name: 'Testnet' },
   { value: 'devnet', name: 'Devnet' },
 ];
+
+/**
+ * Calling client.send can print errors to console.
+ * Wrap in this method to suppress errors.
+ *
+ * example usage:
+ * ```
+ * const response = await clientSendWrapper(() => client.submit(command));
+ * ```
+ */
+export const clientSendWrapper = async <
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  T extends (...args: any[]) => any,
+>(
+  fn: T,
+): Promise<Awaited<ReturnType<T>>> => {
+  return new Promise<Awaited<ReturnType<T>>>((resolve, reject) => {
+    const stderrWrite = process.stderr.write;
+    // @ts-ignore
+    process.stderr.write = () => {};
+    // Not using `.finally()` to restore stderr before executing resolve/reject
+    Promise.resolve(fn())
+      .then((value) => {
+        process.stderr.write = stderrWrite;
+        resolve(value);
+      })
+      .catch((error) => {
+        process.stderr.write = stderrWrite;
+        reject(error);
+      });
+  });
+};

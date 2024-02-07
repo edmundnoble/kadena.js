@@ -60,13 +60,16 @@ export async function kadenaDecrypt(
       ? Buffer.from(encryptedData, 'base64').toString().split('.')
       : Buffer.from(encryptedData).toString().split('.');
 
+  if (encryptedBase64 === undefined) {
+    throw new Error('Encrypted data is invalid');
+  }
+
   // Convert from Base64.
   const salt = Buffer.from(saltBase64, 'base64');
   const iv = Buffer.from(ivBase64, 'base64');
   const cipherText = Buffer.from(encryptedBase64, 'base64');
 
   // decrypt and return the private key.
-
   const decrypted = await decrypt({ cipherText, iv }, password, salt).catch(
     () => undefined,
   );

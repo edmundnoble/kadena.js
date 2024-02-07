@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import type { Command } from 'commander';
 import { z } from 'zod';
 import { CLINAME } from '../constants/config.js';
+import { CommandError } from './command.util.js';
 import { displayConfig } from './createCommandDisplayHelper.js';
 import type { OptionType, createOption } from './createOption.js';
 import { globalOptions } from './globalOptions.js';
@@ -131,9 +132,13 @@ export function createCommand<const T extends OptionType[]>(
 
         await action(config, generalArgs);
       } catch (error) {
+        if (error instanceof CommandError) {
+          process.exitCode = error.exitCode;
+          return;
+        }
         console.error(error);
         console.error(chalk.red(`Error executing command ${name}: ${error})`));
-        process.exit(1);
+        process.exitCode = 1;
       }
     });
   };
