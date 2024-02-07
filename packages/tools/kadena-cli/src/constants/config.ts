@@ -31,6 +31,9 @@ export const TRANSACTION_PATH = `/${TRANSACTION_FOLDER_NAME}`;
 // templates
 export const TX_TEMPLATE_FOLDER = `${KADENA_DIR}/transaction-templates`;
 
+// templates
+export const TX_TEMPLATE_FOLDER = `${PROJECT_ROOT_PATH}${PROJECT_ROOT_FOLDER}/transaction-templates`;
+
 // key extensions
 export const WALLET_EXT = '.wallet';
 export const WALLET_LEGACY_EXT = '.legacy.wallet';
