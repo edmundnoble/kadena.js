@@ -73,7 +73,8 @@ export function createCommand<const T extends OptionType[]>(
         // collectResponses
         const questionsMap = options.filter((o) => o.isInQuestions);
 
-        if (!process.stdout.isTTY) args.quiet = true;
+        if (!process.stderr.isTTY) args.quiet = true;
+
         handleQuietOption(
           `${program.name()} ${name}`,
           args,
@@ -112,7 +113,10 @@ export function createCommand<const T extends OptionType[]>(
         for (const option of options) {
           if ('expand' in option) {
             if (typeof option.expand === 'function') {
-              const expanded = await option.expand(newArgs[option.key]);
+              const expanded = await option.expand(
+                newArgs[option.key],
+                newArgs,
+              );
               if (expanded !== undefined) {
                 config[`${option.key}Config`] = expanded;
               }
@@ -120,7 +124,10 @@ export function createCommand<const T extends OptionType[]>(
           }
           if ('transform' in option) {
             if (typeof option.transform === 'function') {
-              config[option.key] = await option.transform(newArgs[option.key]);
+              config[option.key] = await option.transform(
+                newArgs[option.key],
+                newArgs,
+              );
             }
           }
         }
@@ -206,7 +213,7 @@ export function getCommandExecution(
           typeof value === 'object' &&
           Object.getPrototypeOf(value) === Object.prototype
         ) {
-          displayValue = Object.entries(value)
+          return Object.entries(value)
             .map(([key, val]) => `--${key}="${val}"`)
             .join(' ');
         }

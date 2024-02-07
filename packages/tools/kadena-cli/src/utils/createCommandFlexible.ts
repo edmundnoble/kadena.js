@@ -51,7 +51,7 @@ export async function executeOption<Option extends OptionType>(
   const newConfig = { [option.key]: value } as OptionConfig<Option>;
   if ('expand' in option) {
     if (typeof option.expand === 'function') {
-      const expanded = await option.expand(value);
+      const expanded = await option.expand(value, args);
       if (expanded !== undefined && expanded !== null) {
         // @ts-ignore
         newConfig[`${option.key}Config`] = expanded;
@@ -61,7 +61,7 @@ export async function executeOption<Option extends OptionType>(
   if ('transform' in option) {
     if (typeof option.transform === 'function') {
       // @ts-ignore
-      newConfig[option.key] = await option.transform(value);
+      newConfig[option.key] = await option.transform(value, args);
     }
   }
 
@@ -120,7 +120,7 @@ export const createCommandFlexible =
       let args = { ...originalArgs };
       try {
         // Automatically enable quiet mode if not in interactive environment
-        if (!process.stdout.isTTY) args.quiet = true;
+        if (!process.stderr.isTTY) args.quiet = true;
 
         const collectOptionsMap = options.reduce((acc, option) => {
           acc[option.key] = async (customArgs = {}) => {

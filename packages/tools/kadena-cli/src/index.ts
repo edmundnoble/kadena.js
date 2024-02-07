@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
+import ttys from 'ttys';
 
 import { loadProgram } from './program.js';
 
@@ -16,8 +17,8 @@ async function main(): Promise<void> {
 
   await loadProgram(new Command()).parseAsync();
 
-  // TODO: test if this is needed
-  // ttys.stdin.destroy();
+  // Without this the stdin stream will not close on it's own
+  ttys.stdin.destroy();
 }
 
 main().catch(console.error);

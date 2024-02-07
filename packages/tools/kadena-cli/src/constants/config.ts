@@ -16,6 +16,9 @@ export const PLAIN_KEY_DIR: string = `${PROJECT_ROOT_PATH}${PROJECT_ROOT_FOLDER}
 export const TRANSACTION_FOLDER_NAME = 'transactions';
 export const TRANSACTION_PATH = `${PROJECT_ROOT_PATH}/${TRANSACTION_FOLDER_NAME}`;
 
+// templates
+export const TX_TEMPLATE_FOLDER = `${PROJECT_ROOT_PATH}${PROJECT_ROOT_FOLDER}/transaction-templates`;
+
 // key extensions
 export const WALLET_EXT: string = '.wallet';
 export const WALLET_LEGACY_EXT: string = '.legacy.wallet';

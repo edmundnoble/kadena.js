@@ -9,8 +9,10 @@ import type { CommandResult } from '../../utils/command.util.js';
 import { assertCommandError } from '../../utils/command.util.js';
 import { createCommandFlexible } from '../../utils/createCommandFlexible.js';
 import { globalOptions } from '../../utils/globalOptions.js';
+import { log } from '../../utils/logger.js';
 import { txOptions } from '../txOptions.js';
 import { fixTemplatePactCommand } from './templates/mapper.js';
+import { writeTemplatesToDisk } from './templates/templates.js';
 
 export const createTransaction = async (
   template: string,
@@ -93,8 +95,14 @@ export const createTransactionCommandNew = createCommandFlexible(
     globalOptions.outFileJson(),
   ],
   async (option, values) => {
-    console.error('values', values);
-    const template = await option.template();
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    const stdin = values.at(-1) || null;
+
+    log.info(log.color.red('hello'), 'world');
+
+    await writeTemplatesToDisk();
+    const template = await option.template({ stdin });
+
     const templateData = await option.templateData();
     const templateVariables = await option.templateVariables({
       values,

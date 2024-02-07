@@ -305,3 +305,6 @@ export function clearCLI(full: boolean = false): void {
 export const notEmpty = <TValue>(
   value: TValue | null | undefined,
 ): value is TValue => value !== null && value !== undefined;
+
+export const isNotEmptyString = (value: unknown): value is string =>
+  value !== null && value !== undefined && value !== '';

@@ -27,8 +27,8 @@ export interface IOptionCreatorObject {
   prompt: IPrompt<any>;
   validation: z.ZodSchema;
   option: Option;
-  expand?: (value: any) => unknown;
-  transform?: (value: any) => unknown;
+  expand?: (value: any, args: Record<string, unknown>) => unknown;
+  transform?: (value: any, args: Record<string, unknown>) => unknown;
   defaultIsOptional?: boolean;
   allowUnknownOptions?: boolean;
 }
