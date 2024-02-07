@@ -18,6 +18,16 @@ import { getTransactionsFromFile } from '../utils/txHelpers.js';
 
 kadena tx send ??
 */
+type IAnyCommand = IUnsignedCommand | ICommand;
+const isFilePaths = (
+  transactions: IAnyCommand[] | string[],
+): transactions is string[] => {
+  return typeof transactions[0] === 'string';
+};
+interface ISubmitResponse {
+  transaction: IAnyCommand;
+  requestKey: string;
+}
 
 const isFilePaths = (
   transactions: (IUnsignedCommand | ICommand)[] | string[],
