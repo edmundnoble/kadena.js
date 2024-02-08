@@ -25,7 +25,8 @@ signers:
 type: exec
 `;
 
-const defaultTemplates = {
+/** Only exported to be used in tests, otherwise use getTemplate() */
+export const defaultTemplates = {
   transfer: transferTemplate,
 } as Record<string, string>;
 

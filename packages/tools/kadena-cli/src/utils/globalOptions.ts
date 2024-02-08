@@ -128,9 +128,7 @@ export const globalOptions = {
   }),
   legacy: createOption({
     key: 'legacy' as const,
-    prompt: ({ legacy }): boolean => {
-      return legacy === true || legacy === 'true' || false;
-    },
+    prompt: () => false,
     validation: z.boolean().optional(),
     option: globalFlags.legacy,
   }),

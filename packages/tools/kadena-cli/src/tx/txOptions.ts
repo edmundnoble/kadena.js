@@ -28,6 +28,7 @@ export const txOptions = {
       let template: string;
 
       if (templateInput === '-' && isNotEmptyString(args.stdin)) {
+        log.debug('using stdin');
         template = args.stdin;
       } else {
         template = await getTemplate(templateInput);
@@ -158,6 +159,15 @@ export const txOptions = {
     option: new Option(
       '-d, --tx-transaction-dir <txTransactionDir>',
       `Enter your transaction directory (default: "./${TRANSACTION_FOLDER_NAME}")`,
+    ),
+  }),
+  directory: createOption({
+    key: 'directory' as const,
+    prompt: tx.txDirPrompt,
+    validation: z.string().optional(),
+    option: new Option(
+      '--directory <directory>',
+      `Enter your directory (default: working directory)`,
     ),
   }),
 };

@@ -10,6 +10,7 @@ import { txCommandFactory } from './tx/index.js';
 // import { typescriptCommandFactory } from './typescript/index.js';
 
 import type { Command } from 'commander';
+
 import { readFileSync } from 'node:fs';
 
 const packageJson: { version: string } = JSON.parse(

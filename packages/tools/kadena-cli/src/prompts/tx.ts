@@ -87,7 +87,8 @@ export const transactionSelectPrompt: IPrompt<string> = async (args) => {
 
 export const transactionsSelectPrompt: IPrompt<string[]> = async (args) => {
   const signed = (args.signed as boolean) ?? true;
-  const path = (args.path as string) ?? (args.txTransactionDir as string);
+  const path =
+    (args.path as string) ?? (args.directory as string) ?? process.cwd();
 
   const fileExists = await services.filesystem.fileExists(path);
   if (fileExists) return [path];
@@ -112,6 +113,20 @@ export const transactionsSelectPrompt: IPrompt<string[]> = async (args) => {
 
   return selectedTransaction;
 };
+
+export async function txDirPrompt(): Promise<string> {
+  return await input({
+    message: `Enter your directory (default: working directory):`,
+    validate: async (input) => {
+      const dirExists = await services.filesystem.directoryExists(input);
+      if (!dirExists) {
+        return 'Directory or file not found. Please enter a valid directory or file path.';
+      }
+      return true;
+    },
+    default: `./`,
+  });
+}
 
 export async function txTransactionDirPrompt(): Promise<string> {
   return await input({

@@ -2,6 +2,7 @@ import clear from 'clear';
 import { existsSync, mkdirSync, readdirSync } from 'fs';
 import path from 'path';
 import sanitize from 'sanitize-filename';
+import type { ZodError } from 'zod';
 import { defaultDevnetsPath } from '../constants/devnets.js';
 import { defaultNetworksPath } from '../constants/networks.js';
 import type { ICustomDevnetsChoice } from '../devnet/utils/devnetHelpers.js';
@@ -308,3 +309,22 @@ export const notEmpty = <TValue>(
 
 export const isNotEmptyString = (value: unknown): value is string =>
   value !== null && value !== undefined && value !== '';
+
+/**
+ * Prints zod error issues in format
+ * ```code
+ * {key}: [issues by key]\n
+ * ...repeat
+ * ```
+ */
+export const formatZodError = (error: ZodError): string => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const format = error.format() as any;
+  const formatted = Object.keys(format)
+    .map((key) => {
+      if (key === '_errors') return null;
+      return `${key}: ${format[key]?._errors.join(', ')}`;
+    })
+    .filter(notEmpty);
+  return formatted.join('\n');
+};

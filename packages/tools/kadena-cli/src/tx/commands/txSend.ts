@@ -1,5 +1,4 @@
 import type { Command } from 'commander';
-import debug from 'debug';
 
 import type { ICommand, IUnsignedCommand } from '@kadena/client';
 import { createClient, isSignedTransaction } from '@kadena/client';
@@ -7,9 +6,10 @@ import path from 'node:path';
 import { clientSendWrapper } from '../../utils/client.js';
 import type { CommandResult } from '../../utils/command.util.js';
 import { assertCommandError } from '../../utils/command.util.js';
-import { createCommand } from '../../utils/createCommand.js';
+import { createCommandFlexible } from '../../utils/createCommandFlexible.js';
 import { globalOptions } from '../../utils/globalOptions.js';
 import { txOptions } from '../txOptions.js';
+import { parseTransactionsFromStdin } from '../utils/input.js';
 import { getTransactionsFromFile } from '../utils/txHelpers.js';
 
 // import { globalOptions } from '../../utils/globalOptions.js';
@@ -18,14 +18,15 @@ import { getTransactionsFromFile } from '../utils/txHelpers.js';
 
 kadena tx send ??
 */
-type IAnyCommand = IUnsignedCommand | ICommand;
+
 const isFilePaths = (
-  transactions: IAnyCommand[] | string[],
+  transactions: (IUnsignedCommand | ICommand)[] | string[],
 ): transactions is string[] => {
   return typeof transactions[0] === 'string';
 };
+
 interface ISubmitResponse {
-  transaction: IAnyCommand;
+  transaction: IUnsignedCommand | ICommand;
   requestKey: string;
 }
 
@@ -39,20 +40,18 @@ export const sendTransactionAction = async ({
   networkHost: string;
   chainId: string;
   /** Command object of filepath to JSON file with command object */
-  transactions: IAnyCommand[] | string[];
-}): Promise<
-  CommandResult<{
-    transactions: ISubmitResponse[];
-  }>
-> => {
+  transactions: (IUnsignedCommand | ICommand)[] | string[];
+}): Promise<CommandResult<{ transactions: ISubmitResponse[] }>> => {
   const client = createClient(
     `${networkHost}/chainweb/0.0/${networkId}/chain/${chainId}/pact`,
   );
 
-  let transactions: IAnyCommand[] = [];
+  let transactions: (IUnsignedCommand | ICommand)[] = [];
 
   if (isFilePaths(transactionsInput)) {
     transactions = await getTransactionsFromFile(transactionsInput, true);
+  } else {
+    transactions = transactionsInput;
   }
 
   const successfulCommands: ISubmitResponse[] = [];
@@ -92,26 +91,38 @@ export const sendTransactionAction = async ({
 export const createSendTransactionCommand: (
   program: Command,
   version: string,
-) => void = createCommand(
+) => void = createCommandFlexible(
   'send',
   'send a transaction to the network',
   [
-    txOptions.txTransactionDir({ isOptional: true }),
+    txOptions.directory({ disableQuestion: true }),
     txOptions.txSignedTransactionFiles(),
     globalOptions.network(),
     globalOptions.chainId(),
   ],
-  async (config) => {
-    debug('send-transaction:action')({ config });
+  async (option, values, stdin) => {
+    const commands: IUnsignedCommand[] = [];
+    const filePaths: string[] = [];
 
-    const absolutePaths = config.txSignedTransactionFiles.map((file) =>
-      path.resolve(path.join(config.txTransactionDir, file)),
-    );
+    if (stdin !== undefined) {
+      commands.push(await parseTransactionsFromStdin(stdin));
+    } else {
+      const directory = (await option.directory()).directory ?? process.cwd();
+      const { txSignedTransactionFiles } =
+        await option.txSignedTransactionFiles();
+      const absolutePaths = txSignedTransactionFiles.map((file) =>
+        path.resolve(path.join(directory, file)),
+      );
+      filePaths.push(...absolutePaths);
+    }
+
+    const { networkConfig } = await option.network();
+    const { chainId } = await option.chainId();
 
     const result = await sendTransactionAction({
-      ...config.networkConfig,
-      chainId: config.chainId,
-      transactions: absolutePaths,
+      ...networkConfig,
+      chainId: chainId,
+      transactions: commands.length ? commands : filePaths,
     });
     assertCommandError(result);
 
