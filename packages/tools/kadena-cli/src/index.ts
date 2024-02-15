@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
-import ttys from 'ttys';
 
 import { loadProgram } from './program.js';
 
 async function main(): Promise<void> {
+  if (!process.stderr.isTTY) {
+    await loadProgram(new Command()).parseAsync();
+    return;
+  }
+
+  const ttys = await import('ttys');
   let stdin: string = '';
   try {
     stdin = readFileSync(0, 'utf8');
