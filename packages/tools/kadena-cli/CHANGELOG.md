@@ -1,5 +1,14 @@
 # @kadena/kadena-cli
 
+## 0.4.0
+
+### Minor Changes
+
+- b383c722b: Fix account add command for --quiet flag
+- 1a326e534: Add scripts to deploy faucet to devnet Add "account fund" command
+  to kadena-cli
+- caae0f830: Fix account details sub command
+
 ## 0.3.1
 
 ### Patch Changes

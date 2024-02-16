@@ -1,5 +1,12 @@
 # @kadena/graph
 
+## 0.1.8
+
+### Patch Changes
+
+- ea63873ba: fix an issue where retrieval of marmalade-v2.ledger.get-token-info
+  results in invalid json for `policies` removed `policies` for now.
+
 ## 0.1.7
 
 ### Patch Changes

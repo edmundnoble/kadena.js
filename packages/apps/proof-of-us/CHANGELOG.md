@@ -1,5 +1,12 @@
 # @kadena/proof-of-us
 
+## 0.2.4
+
+### Patch Changes
+
+- 62a106326: adds basic integration for graph
+  - @kadena/react-ui@0.8.1
+
 ## 0.2.3
 
 ### Patch Changes
