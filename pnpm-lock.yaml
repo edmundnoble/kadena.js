@@ -2322,6 +2322,9 @@ importers:
       '@kadena/pactjs-cli':
         specifier: workspace:*
         version: link:../pactjs-cli
+      '@kadena/react-ui':
+        specifier: workspace:*
+        version: link:../../libs/react-ui
       '@kadena/tools':
         specifier: workspace:*
         version: link:../../apps/tools
@@ -33546,7 +33549,6 @@ packages:
     name: hw-app-kda
     version: 0.1.0
     hasBin: true
-    prepare: true
     requiresBuild: true
     dependencies:
       '@ledgerhq/hw-transport': 6.30.3

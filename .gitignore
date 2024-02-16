@@ -96,4 +96,3 @@ temp
 #Playwright
 /packages/*/*/test-results
 /packages/*/*/playwright-report
-
